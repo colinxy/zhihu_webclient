@@ -1,0 +1,12 @@
+Zhihu Client Built for Anonymity and Compatibility
+==================================================
+
+
+Everyone has the right browse the internet anonymously,
+but Zhihu enforce user login and cookies to track our
+behavior on this site. Even though the internet is never
+entirely secure and anonymous, we shall make an effort to
+prevent companies from collecting our personal information.
+
+This client is built for us to have a smooth and
+anonymous (no login) experience when browsing on zhihu.

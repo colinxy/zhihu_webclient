@@ -1,0 +1,30 @@
+
+<head>
+  <link rel="shortcut icon" href="//static.zhihu.com/static/img/favicon.ico" />
+</head>
+
+<h1>Welcome to Zhihu Client</h1>
+
+{% block content %}
+  <h2>Questions that I have followed</h2>
+  {% if question_following %}
+  <ul>
+    {% for follow in question_following %}
+    <li>{{ follow }}</li>
+    {% endfor %}
+  </ul>
+  {% else %}
+  <p>haven't followed any questions yet?</p>
+  {% endif %}
+
+  <h2>People that I have followed</h2>
+  {% if people_following %}
+  <ul>
+    {% for follow in people_following %}
+    <li>{{ follow }}</li>
+    {% endfor %}
+  </ul>
+  {% else %}
+  <p>haven't followed any people yet?</p>
+  {% endif %}
+{% endblock %}
