@@ -13,7 +13,7 @@ request_headers = {"User-Agent": UserAgent().random,
 
 
 def index(request):
-    return render(request, "client/index.html", {
+    return render(request, "client/index.djhtml", {
         "question_following": Question.objects.order_by("name"),
         "people_following": People.objects.order_by("name"),
     })

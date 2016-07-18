@@ -6,25 +6,27 @@
 <h1>Welcome to Zhihu Client</h1>
 
 {% block content %}
+  <!-- questions -->
   <h2>Questions that I have followed</h2>
   {% if question_following %}
-  <ul>
-    {% for follow in question_following %}
-    <li>{{ follow }}</li>
-    {% endfor %}
-  </ul>
+    <ul>
+      {% for follow in question_following %}
+        <li>{{ follow }}</li>
+      {% endfor %}
+    </ul>
   {% else %}
-  <p>haven't followed any questions yet?</p>
+    <p>haven't followed any questions yet?</p>
   {% endif %}
 
+  <!-- people -->
   <h2>People that I have followed</h2>
   {% if people_following %}
-  <ul>
-    {% for follow in people_following %}
-    <li>{{ follow }}</li>
-    {% endfor %}
-  </ul>
+    <ul>
+      {% for follow in people_following %}
+        <li>{{ follow }}</li>
+      {% endfor %}
+    </ul>
   {% else %}
-  <p>haven't followed any people yet?</p>
+    <p>haven't followed any people yet?</p>
   {% endif %}
 {% endblock %}
