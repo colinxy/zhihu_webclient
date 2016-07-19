@@ -1,6 +1,9 @@
 Zhihu Client Built for Anonymity and Compatibility
 ==================================================
 
+DISCLAIMER:
+PERSONAL EXPERIMENT ONLY, RELINQUISH ALL RIGHTS IN CASE OF LEGAL DISPUTE
+
 
 Everyone has the right browse the internet anonymously,
 but Zhihu enforce user login and cookies to track our

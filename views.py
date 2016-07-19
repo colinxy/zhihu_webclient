@@ -1,15 +1,11 @@
 
+from .zhihu_util import grab_page
+
 from django.http import HttpResponse
 from django.shortcuts import render
 import requests
-from fake_useragent import UserAgent
 
 from .models import Question, People
-
-BASE_URL = "http://www.zhihu.com/"
-request_headers = {"User-Agent": UserAgent().random,
-                   "Referer": "http://www.zhihu.com/",
-                   "Content-Type": "text/html; charset=utf-8"}
 
 
 def index(request):
@@ -20,48 +16,46 @@ def index(request):
 
 
 def search(request):
-    url = BASE_URL + "search"
-    req = requests.get(url, params=request.GET, headers=request_headers)
-    req.encoding = "utf-8"
+    status_code, html = grab_page("/search", request.GET)
 
-    if req.status_code != requests.codes.ok:
-        print(req.url)
-        return HttpResponse(req.text, status=404)
+    if status_code != requests.codes.ok:
+        return HttpResponse(html, status=404)
 
-    return HttpResponse(req.text)
+    return HttpResponse(html)
+
+
+def topic(request, topic_id):
+    status_code, html = grab_page("/topic/" + topic_id)
+
+    if status_code != requests.codes.ok:
+        return HttpResponse(html, status=404)
+
+    return HttpResponse(html)
 
 
 def question(request, question_id):
-    url = BASE_URL + "question/" + question_id
-    req = requests.get(url, headers=request_headers)
-    req.encoding = "utf-8"
+    status_code, html = grab_page("/question/" + question_id)
 
-    if req.status_code != requests.codes.ok:
-        print(req.url, req.encoding)
-        return HttpResponse(req.text, status=404)
+    if status_code != requests.codes.ok:
+        return HttpResponse(html, status=404)
 
-    return HttpResponse(req.text)
+    return HttpResponse(html)
 
 
 def answer(request, question_id, answer_id):
-    url = BASE_URL + "question/" + question_id + "/answer/" + answer_id
-    req = requests.get(url, headers=request_headers)
-    req.encoding = "utf-8"
+    status_code, html = grab_page("/question/{}/answer/{}".
+                                  format(question_id, answer_id))
 
-    if req.status_code != requests.codes.ok:
-        print(req.url)
-        return HttpResponse(req.text, status=404)
+    if status_code != requests.codes.ok:
+        return HttpResponse(html, status=404)
 
-    return HttpResponse(req.text)
+    return HttpResponse(html)
 
 
 def people(request, handle):
-    url = BASE_URL + "people/" + handle
-    req = requests.get(url, headers=request_headers)
-    req.encoding = "utf-8"
+    status_code, html = grab_page("/people/" + handle)
 
-    if req.status_code != requests.codes.ok:
-        print(req.url)
-        return HttpResponse(req.text, status=404)
+    if status_code != requests.codes.ok:
+        return HttpResponse(html, status=404)
 
-    return HttpResponse(req.text)
+    return HttpResponse(html)

@@ -10,6 +10,8 @@ urlpatterns = [
         views.answer, name="answer"),
     url(r"^people/(?P<handle>\w+)$",
         views.people, name="people"),
+    url(r"^topic/(?P<topic_id>[0-9]+)",
+        views.topic, name="topic"),
     url(r"^search$",
         views.search, name="search"),
 ]

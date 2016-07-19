@@ -12,44 +12,39 @@
 
 <body>
 <div role="navigation" class="zu-top">
-  <div class="zg-wrap modal-shifting clearfix">
+  <div class="zg-wrap">
     <a href="/" class="zu-top-link-logo">知乎</a>
 
-    <div role="search" id="zh-top-search" class="zu-top-search">
-      <form method="GET" action="/search">
-        <input type="hidden" name="type" value="content">
-        <label for="q" class="hide-text">知乎搜索</label><input type="text" class="zu-top-search-input" id="q" name="q" autocomplete="off" value="" placeholder="搜索你感兴趣的内容...">
-        <button type="submit" class="zu-top-search-button"><span class="hide-text">搜索</span><span class="sprite-global-icon-magnifier-dark"></span></button>
+    <div role="search" class="zu-top-search">
+      <form method="GET" action="/search" class="zu-top-search-form">
+        <!-- <input type="hidden" name="type" value="content">
+             <label for="q" class="hide-text">知乎搜索</label> -->
+        <input type="text" class="zu-top-search-input" name="q" autocomplete="off" value="" placeholder="搜索你感兴趣的内容...">
+        <button type="submit" class="zu-top-search-button">
+          <!-- <span class="hide-text">搜索</span> -->
+          <span class="sprite-global-icon"></span>
+        </button>
       </form>
     </div>
 
-    <!-- <div id="zg-top-nav" class="zu-top-nav">
-         <ul class="zu-top-nav-ul zg-clear">
-
-         <li class="zu-top-nav-li " id="zh-top-nav-home">
-         <a class="zu-top-nav-link" href="/" id="zh-top-link-home" data-za-c="view_home" data-za-a="visit_home" data-za-l="top_navigation_home">首页</a>
-         </li>
-
-         <li class="top-nav-topic-selector zu-top-nav-li ">
-         <a class="zu-top-nav-link" href="/topic">话题</a>
-         </li>
-
-         <li class="zu-top-nav-li ">
-         <a class="zu-top-nav-link" href="/explore">发现</a>
-         </li>
-         </ul>
-         </div> -->
+    <div class="zu-top-nav">
+      <ul class="zu-top-nav-ul">
+        <li class="zu-top-nav-li ">
+          <a class="zu-top-nav-link" href="/explore">发现</a>
+        </li>
+      </ul>
+    </div>
 
   </div>
 
 </div>
 
 
-<h1>Welcome to Zhihu Client</h1>
+<h1>匿名知乎客户端</h1>
 
 {% block content %}
   <!-- questions -->
-  <h2>Questions that I have followed</h2>
+  <h2>我关注的问题</h2>
   {% if question_following %}
     <ul>
       {% for follow in question_following %}
@@ -57,11 +52,11 @@
       {% endfor %}
     </ul>
   {% else %}
-    <p>haven't followed any questions yet?</p>
+    <p>Haven't followed any questions yet?</p>
   {% endif %}
 
   <!-- people -->
-  <h2>People that I have followed</h2>
+  <h2>我关注的人</h2>
   {% if people_following %}
     <ul>
       {% for follow in people_following %}
@@ -69,7 +64,7 @@
       {% endfor %}
     </ul>
   {% else %}
-    <p>haven't followed any people yet?</p>
+    <p>Haven't followed anybody yet?</p>
   {% endif %}
 {% endblock %}
 
