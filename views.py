@@ -59,3 +59,7 @@ def people(request, handle):
         return HttpResponse(html, status=404)
 
     return HttpResponse(html)
+
+
+def follow_confirm(request):
+    print(request)
