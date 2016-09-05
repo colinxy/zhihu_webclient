@@ -40,11 +40,11 @@
 </div>
 
 
-<h1>匿名知乎客户端</h1>
+<h1>Zhihu Client Built for Anonymity</h1>
 
 {% block content %}
   <!-- questions -->
-  <h2>我关注的问题</h2>
+  <h2>Questions I have followed</h2>
   {% if question_following %}
     <ul>
       {% for follow in question_following %}
@@ -56,7 +56,7 @@
   {% endif %}
 
   <!-- people -->
-  <h2>我关注的人</h2>
+  <h2>People I have followed</h2>
   {% if people_following %}
     <ul>
       {% for follow in people_following %}

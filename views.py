@@ -63,3 +63,15 @@ def people(request, handle):
 
 def follow_confirm(request):
     print(request)
+
+    # follow question
+    if "question" in request.POST:
+        # TODO
+        Question.objects.get
+
+    # follow person
+    if "people" in request.POST:
+        # TODO
+        People.objects.get
+
+    return HttpResponse()
