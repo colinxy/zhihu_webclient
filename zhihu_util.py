@@ -11,17 +11,49 @@ except ImportError:
     PARSER = 'html.parser'
 
 BASE_URL = "http://www.zhihu.com"
+# chrome User-Agent
+# Mozilla/5.0 (Macintosh; Intel Mac OS X 10_10_5) AppleWebKit/537.36
+# (KHTML, like Gecko) Chrome/52.0.2743.116 Safari/537.36
 request_headers = {"User-Agent": UserAgent().chrome,
                    "Referer": "http://www.zhihu.com/",
                    "Content-Type": "text/html; charset=utf-8"}
 
 # use of {{}} to represent {} for escaping formatting
 JS_FETCH = """\
-function(){{}}
+function getCookie(name) {{
+    var cookieValue = null;
+    if (document.cookie && document.cookie !== '') {{
+        var cookies = document.cookie.split(';');
+        for (var i = 0; i < cookies.length; i++) {{
+            var cookie = cookies[i].trim();
+            if (cookie.substring(0, name.length + 1) === (name + '=')) {{
+                cookieValue = decodeURIComponent(cookie.substring(name.length + 1));
+                break;
+            }}
+        }}
+    }}
+    return cookieValue;
+}}
+function follow(){{
+    fetch('/follow',{{
+        method:'POST',
+        credentials:'same-origin',
+        body:{},
+        headers:{{"Content-Type":"application/json",
+                  "Origin":document.origin,
+                  "X-CSRFToken":getCookie("csrftoken"),}}
+    }})
+    .then(function(resp) {{ if (resp.status==200) alert("success"); }});
+}}"""
+# to pass django csrf check, both credentials(cookie) and X-CSRFToken needed
 
-fetch('/follow',{{ method:'POST',body:{},
-headers: {{Content-Type: "application/json"}} }})
-.then(function(resp) {{ if (resp.status==200) alert("success"); }})"""
+
+def insert_js(soup, elem, payload):
+    script = soup.new_tag("script")
+    script["type"] = "text/javascript"
+    script.string = JS_FETCH.format(payload)
+    elem.insert_after(script)
+    elem["onclick"] = "follow()"
 
 
 def process_page(html, relative_url):
@@ -43,10 +75,15 @@ def process_page(html, relative_url):
     if footer is not None:
         footer.extract()
 
-    # image tag : no referer
-    imgs = soup.find_all("img")
-    for img in imgs:
-        img["referrerpolicy"] = "no-referrer"
+    meta = soup.new_tag("meta")
+    meta["name"] = "referrer"
+    meta["content"] = "no-referrer"
+    soup.head.append(meta)
+    # image tag : no referrer
+    # imgs = soup.find_all("img")
+    # for img in imgs:
+    #     img["referrerpolicy"] = "no-referrer"
+    # css tag : no referrer
 
     # post json data from url
     fromurl = relative_url[1:].split('/') \
@@ -57,32 +94,24 @@ def process_page(html, relative_url):
     # follow question
     q_div = soup.find("div", id="zh-question-side-header-wrap")
     if q_div is not None:
-        # TODO
-        script = soup.new_tag("script")
-        script["type"] = "text/javascript"
-        script.string = JS_FETCH.format(payload)
-        soup.insert_after
-
-        q_div["onclick"] = # JS_FETCH.format(payload)
+        insert_js(soup, q_div, payload)
 
     # follow people
     p_div = soup.select(".zm-profile-header-op-btns .zg-btn-follow")
     if p_div:
-        script = soup.new_tag("script")
-        script["type"] = "text/javascript"
-
-        p_div[0]["onclick"] = JS_FETCH.format(payload)
+        insert_js(soup, p_div[0], payload)
 
     return str(soup)
 
 
 def grab_page(relative_url, get_params=None):
-    req = requests.get(BASE_URL + relative_url, params=get_params,
-                       headers=request_headers)
-    req.encoding = "utf-8"
+    resp = requests.get(BASE_URL + relative_url, params=get_params,
+                        headers=request_headers)
+    resp.encoding = "utf-8"
 
+    # print("got", relative_url, resp.status_code)
     # 404
-    if req.status_code != requests.codes.ok:
-        return req.status_code, req.text
+    if resp.status_code != requests.codes.ok:
+        return resp.status_code, resp.text
 
-    return req.status_code, process_page(req.text, relative_url)
+    return resp.status_code, process_page(resp.text, relative_url)
