@@ -5,6 +5,7 @@ from django.http import HttpResponse
 from django.views.decorators.csrf import ensure_csrf_cookie
 from django.shortcuts import render
 import requests
+import json
 
 from .models import Question, People
 
@@ -71,16 +72,15 @@ def people(request, handle):
 
 
 def follow_confirm(request):
-    print(request)
+    data = json.loads(request.body.decode("utf-8"))
+    print(request.body, data)
 
     # follow question
-    if "question" in request.POST:
-        # TODO
-        Question.objects.get
+    if "question" in data:
+        print(Question.objects.all())
 
     # follow person
-    if "people" in request.POST:
-        # TODO
-        People.objects.get
+    if "people" in data:
+        print(People.objects.all())
 
     return HttpResponse(content_type="application/json")

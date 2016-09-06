@@ -27,7 +27,8 @@ function getCookie(name) {{
         for (var i = 0; i < cookies.length; i++) {{
             var cookie = cookies[i].trim();
             if (cookie.substring(0, name.length + 1) === (name + '=')) {{
-                cookieValue = decodeURIComponent(cookie.substring(name.length + 1));
+                cookieValue =
+                    decodeURIComponent(cookie.substring(name.length + 1));
                 break;
             }}
         }}
@@ -38,7 +39,7 @@ function follow(){{
     fetch('/follow',{{
         method:'POST',
         credentials:'same-origin',
-        body:{},
+        body:'{}',
         headers:{{"Content-Type":"application/json",
                   "Origin":document.origin,
                   "X-CSRFToken":getCookie("csrftoken"),}}
@@ -90,16 +91,17 @@ def process_page(html, relative_url):
         if relative_url[-1] != '/' else relative_url[1:-1].split('/')
     fromurl_it = iter(fromurl)
     payload = json.dumps(dict(zip(fromurl_it, fromurl_it)))
+    print(payload)
 
     # follow question
     q_div = soup.find("div", id="zh-question-side-header-wrap")
     if q_div is not None:
         insert_js(soup, q_div, payload)
-
-    # follow people
-    p_div = soup.select(".zm-profile-header-op-btns .zg-btn-follow")
-    if p_div:
-        insert_js(soup, p_div[0], payload)
+    else:
+        # follow people
+        p_div = soup.select(".zm-profile-header-op-btns .zg-btn-follow")
+        if p_div:
+            insert_js(soup, p_div[0], payload)
 
     return str(soup)
 
