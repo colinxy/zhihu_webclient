@@ -72,15 +72,15 @@ def people(request, handle):
 
 
 def follow_confirm(request):
-    data = json.loads(request.body.decode("utf-8"))
-    print(request.body, data)
+    payload = json.loads(request.body.decode("utf-8"))
+    print(payload)
 
     # follow question
-    if "question" in data:
+    if "question" in payload:
         print(Question.objects.all())
 
     # follow person
-    if "people" in data:
+    if "people" in payload:
         print(People.objects.all())
 
     return HttpResponse(content_type="application/json")
