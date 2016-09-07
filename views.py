@@ -1,5 +1,5 @@
 
-from .zhihu_util import grab_page
+from .zhihu_util import grab_page, check_follow_payload
 
 from django.http import HttpResponse
 from django.views.decorators.csrf import ensure_csrf_cookie
@@ -75,12 +75,19 @@ def follow_confirm(request):
     payload = json.loads(request.body.decode("utf-8"))
     print(payload)
 
-    # follow question
-    if "question" in payload:
-        print(Question.objects.all())
+    try:
+        payload_type = check_follow_payload(payload)
+    except AttributeError as ex:
+        print(ex)
+        return HttpResponse(content_type="application/json", status=400)
 
+    # follow question
+    if "question" == payload_type:
+        Question.objects.create(question_id=payload["question"],
+                                name=payload["name"])
     # follow person
-    if "people" in payload:
-        print(People.objects.all())
+    elif "people" == payload_type:
+        People.objects.create(handle=payload["people"],
+                              name=payload["name"])
 
     return HttpResponse(content_type="application/json")

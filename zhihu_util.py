@@ -2,6 +2,7 @@
 import requests
 # from fake_useragent import UserAgent
 from bs4 import BeautifulSoup
+import re
 
 try:
     import lxml
@@ -12,10 +13,25 @@ except ImportError:
 BASE_URL = "http://www.zhihu.com"
 # chrome User-Agent
 CHROME = ("Mozilla/5.0 (Macintosh; Intel Mac OS X 10_10_5) AppleWebKit/537.36"
-          "(KHTML, like Gecko) Chrome/52.0.2743.116 Safari/537.36")
+          " (KHTML, like Gecko) Chrome/52.0.2743.116 Safari/537.36")
 request_headers = {"User-Agent": CHROME,  # UserAgent().chrome,
                    "Referer": "http://www.zhihu.com/",
                    "Content-Type": "text/html; charset=utf-8"}
+QUESTION_ID = re.compile(r"\d{6,10}")
+PEOPLE_HANDLE = re.compile(r"[a-zA-Z0-9_-]{3,30}")
+
+
+def grab_page(relative_url, get_params=None):
+    resp = requests.get(BASE_URL + relative_url, params=get_params,
+                        headers=request_headers)
+    resp.encoding = "utf-8"
+
+    # print("got", relative_url, resp.status_code)
+    # 404
+    if resp.status_code != requests.codes.ok:
+        return resp.status_code, resp.text
+
+    return resp.status_code, process_page(resp.text, relative_url)
 
 
 def insert_js(soup, elem):
@@ -78,14 +94,24 @@ def process_page(html, relative_url):
     return str(soup)
 
 
-def grab_page(relative_url, get_params=None):
-    resp = requests.get(BASE_URL + relative_url, params=get_params,
-                        headers=request_headers)
-    resp.encoding = "utf-8"
+def check_follow_payload(payload):
+    if "question" in payload:
+        payload_type = "question"
 
-    # print("got", relative_url, resp.status_code)
-    # 404
-    if resp.status_code != requests.codes.ok:
-        return resp.status_code, resp.text
+        if not QUESTION_ID.fullmatch(payload["question"]):
+            raise AttributeError("invalid question_id")
+        if "name" not in payload:
+            raise AttributeError("invalid question name")
 
-    return resp.status_code, process_page(resp.text, relative_url)
+    elif "people" in payload:
+        payload_type = "people"
+
+        if not PEOPLE_HANDLE.fullmatch(payload["people"]):
+            raise AttributeError("invalid people handle")
+        if "name" not in payload:
+            raise AttributeError("invalid people name")
+
+    else:
+        raise AttributeError("unknown payload")
+
+    return payload_type

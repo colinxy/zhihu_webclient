@@ -48,7 +48,11 @@
   {% if question_following %}
     <ul>
       {% for follow in question_following %}
-        <li>{{ follow }}</li>
+        <li>
+          <a href="{% url 'client:question' follow.question_id %}">
+            {{ follow.name }}
+          </a>
+        </li>
       {% endfor %}
     </ul>
   {% else %}
@@ -60,7 +64,11 @@
   {% if people_following %}
     <ul>
       {% for follow in people_following %}
-        <li>{{ follow }}</li>
+        <li>
+          <a href="{% url 'client:people' follow.handle %}">
+            {{ follow.name }}
+          </a>
+        </li>
       {% endfor %}
     </ul>
   {% else %}

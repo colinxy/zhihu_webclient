@@ -26,9 +26,14 @@ function followInfo() {
     }
 
     // title
-    var title = document.getElementById("zh-question-title").
-            childNodes[1].textContent;
-    info_json["title"] = title.trim();
+    if ("question" in info_json) {
+        var title = document.getElementById("zh-question-title").
+                childNodes[1].textContent;
+        info_json["name"] = title.trim();
+    } else if ("people" in info_json) {
+        var name = document.getElementsByClassName("name")[0].textContent;
+        info_json["name"] = name.trim();
+    }
 
     return JSON.stringify(info_json);
 }
