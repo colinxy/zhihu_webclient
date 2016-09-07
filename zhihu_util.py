@@ -12,8 +12,7 @@ except ImportError:
 
 BASE_URL = "http://www.zhihu.com"
 # chrome User-Agent
-CHROME = ("Mozilla/5.0 (Macintosh; Intel Mac OS X 10_10_5) AppleWebKit/537.36"
-          " (KHTML, like Gecko) Chrome/52.0.2743.116 Safari/537.36")
+CHROME = "Mozilla/5.0 AppleWebKit/537.36 Chrome/52.0 Safari/537.36"
 request_headers = {"User-Agent": CHROME,  # UserAgent().chrome,
                    "Referer": "http://www.zhihu.com/",
                    "Content-Type": "text/html; charset=utf-8"}
@@ -72,7 +71,15 @@ def process_page(html, relative_url):
     # imgs = soup.find_all("img")
     # for img in imgs:
     #     img["referrerpolicy"] = "no-referrer"
-    # css tag : no referrer
+    # provide css tag
+    css_z = soup.new_tag("link")
+    css_z["href"] = "/static/client/z_style.css"
+    css_z["rel"] = "stylesheet"
+    soup.head.append(css_z)
+    css_main = soup.new_tag("link")
+    css_main["href"] = "/static/client/main_style.css"
+    css_main["rel"] = "stylesheet"
+    soup.head.append(css_main)
 
     # post json data from url
     # fromurl = relative_url[1:].split('/') \

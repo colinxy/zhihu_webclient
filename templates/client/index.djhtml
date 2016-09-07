@@ -3,7 +3,7 @@
 <head>
 
   {% load staticfiles %}
-  <link rel="stylesheet" type="text/css" href="{% static 'client/style.css' %}" />
+  <link rel="stylesheet" type="text/css" href="{% static 'client/index_style.css' %}" />
 
   <link rel="shortcut icon" href="//static.zhihu.com/static/img/favicon.ico" />
   <meta charset="utf-8" />

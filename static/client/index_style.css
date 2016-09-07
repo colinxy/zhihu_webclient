@@ -82,7 +82,7 @@ a {
 }
 
 .sprite-global-icon {
-    background-image: url(/static/client/sprite.png);
+    background-image: url(/static/client/sprites.png);
     background-size: 97px 94px;
     background-repeat: no-repeat;
     background-position: -82px 0;
