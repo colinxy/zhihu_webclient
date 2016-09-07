@@ -114,3 +114,10 @@ a {
     display: block;
     font-size: 14px;
 }
+
+button.follow {
+    background: transparent;
+    border: none;
+    color: #999;
+    text-align: center;
+}

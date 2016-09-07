@@ -1,6 +1,5 @@
 
-from .zhihu_util import grab_page, check_follow_payload
-
+from django.core.exceptions import ObjectDoesNotExist
 from django.http import HttpResponse
 from django.views.decorators.csrf import ensure_csrf_cookie
 from django.shortcuts import render
@@ -8,6 +7,9 @@ import requests
 import json
 
 from .models import Question, People
+
+from .zhihu_util import (grab_page, check_follow_request,
+                         check_unfollow_request)
 
 
 def index(request):
@@ -72,22 +74,49 @@ def people(request, handle):
 
 
 def follow_confirm(request):
-    payload = json.loads(request.body.decode("utf-8"))
-    print(payload)
-
     try:
-        payload_type = check_follow_payload(payload)
+        payload_type, payload = check_follow_request(request)
     except AttributeError as ex:
         print(ex)
         return HttpResponse(content_type="application/json", status=400)
 
+    print(payload)
     # follow question
     if "question" == payload_type:
-        Question.objects.create(question_id=payload["question"],
-                                name=payload["name"])
+        try:
+            Question.objects.get(question_id=payload["question"])
+        except ObjectDoesNotExist:
+            Question.objects.create(question_id=payload["question"],
+                                    name=payload["name"])
     # follow person
     elif "people" == payload_type:
-        People.objects.create(handle=payload["people"],
-                              name=payload["name"])
+        try:
+            People.objects.get(handle=payload["people"])
+        except ObjectDoesNotExist:
+            People.objects.create(handle=payload["people"],
+                                  name=payload["name"])
+
+    return HttpResponse(content_type="application/json")
+
+
+def unfollow_confirm(request):
+    try:
+        payload_type, payload = check_unfollow_request(request)
+    except AttributeError as ex:
+        print(ex)
+        return HttpResponse(content_type="application/json", status=400)
+
+    print(payload)
+    try:
+        # delete question
+        if "question" == payload_type:
+            q = Question.objects.get(question_id=payload["question"])
+            q.delete()
+        # delete people
+        elif "people" == payload_type:
+            p = People.objects.get(handle=payload["people"])
+            p.delete()
+    except ObjectDoesNotExist as ex:
+        return HttpResponse(content_type="application/json", status=400)
 
     return HttpResponse(content_type="application/json")

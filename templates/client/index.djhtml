@@ -6,6 +6,7 @@
   <link rel="stylesheet" type="text/css" href="{% static 'client/index_style.css' %}" />
 
   <link rel="shortcut icon" href="//static.zhihu.com/static/img/favicon.ico" />
+  <script type="text/javascript" src="{% static 'client/follow.js' %}"></script>
   <meta charset="utf-8" />
   <title>知乎</title>
 </head>
@@ -48,15 +49,14 @@
   {% if question_following %}
     <ul>
       {% for follow in question_following %}
-        <li>
-          <a href="{% url 'client:question' follow.question_id %}">
-            {{ follow.name }}
-          </a>
+        <li id="question{{ forloop.counter }}">
+          <span><button class="follow" onclick="unfollow('question{{ forloop.counter }}')">X</button></span>
+          <a href="{% url 'client:question' follow.question_id %}">{{ follow.name }}</a>
         </li>
       {% endfor %}
     </ul>
   {% else %}
-    <p>Haven't followed any questions yet?</p>
+    <p>Haven't followed any questions yet? Try the green follow button</p>
   {% endif %}
 
   <!-- people -->
@@ -64,15 +64,14 @@
   {% if people_following %}
     <ul>
       {% for follow in people_following %}
-        <li>
-          <a href="{% url 'client:people' follow.handle %}">
-            {{ follow.name }}
-          </a>
+        <li id="people{{ forloop.counter }}">
+          <span><button class="follow" onclick="unfollow('people{{ forloop.counter }}')">X</button></span>
+          <a href="{% url 'client:people' follow.handle %}">{{ follow.name }}</a>
         </li>
       {% endfor %}
     </ul>
   {% else %}
-    <p>Haven't followed anybody yet?</p>
+    <p>Haven't followed anybody yet? Try the green follow button</p>
   {% endif %}
 {% endblock %}
 

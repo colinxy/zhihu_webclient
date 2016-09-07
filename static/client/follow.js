@@ -51,3 +51,34 @@ function follow(){
         if (resp.status==200) alert("success");
     });
 }
+
+function unfollowInfo(elemId) {
+    var pathname = document.getElementById(elemId).
+            getElementsByTagName('a')[0].pathname;
+    var info_arr = pathname.split('/').filter(function(x) {
+        return x !== (undefined || '');
+    });
+
+    var info_json = {};
+    for (var i = 0; i < info_arr.length; i+=2) {
+        info_json[info_arr[i]] = info_arr[i+1];
+    }
+
+    return JSON.stringify(info_json);
+}
+
+// only available at index page
+function unfollow(elemId) {
+    fetch('/unfollow', {
+        method:'DELETE',
+        credentials:'same-origin',
+        body:unfollowInfo(elemId),
+        headers:{"Content-Type":"application/json",
+                 "X-CSRFToken":getCookie("csrftoken")}
+    }).then(function(resp) {
+        if (resp.status==200) {
+            var li = document.getElementById(elemId);
+            li.parentNode.removeChild(li);
+        }
+    });
+}
