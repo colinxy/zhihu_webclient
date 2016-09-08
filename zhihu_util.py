@@ -34,14 +34,14 @@ def grab_page(relative_url, get_params=None):
     return resp.status_code, process_page(resp.text, relative_url)
 
 
-def insert_js(soup, elem):
+def insert_js(soup, elem, follow_type):
     script = soup.new_tag("script")
     script["type"] = "text/javascript"
     script["src"] = "/static/client/follow.js"
     elem.insert_after(script)
 
     # see follow.js
-    elem["onclick"] = "follow()"
+    elem["onclick"] = "follow({})".format(repr(follow_type))
 
 
 def process_page(html, relative_url):
@@ -86,69 +86,11 @@ def process_page(html, relative_url):
     # follow question
     q_div = soup.find("div", id="zh-question-side-header-wrap")
     if q_div is not None:
-        insert_js(soup, q_div)
+        insert_js(soup, q_div, "question")
     else:
         # follow people
         p_div = soup.select(".zm-profile-header-op-btns .zg-btn-follow")
         if p_div:
-            insert_js(soup, p_div[0])
+            insert_js(soup, p_div[0], "people")
 
     return str(soup)
-
-
-def check_follow_request(request):
-    if request.method != 'POST':
-        raise AttributeError("invalid HTTP method")
-
-    try:
-        payload = json.loads(request.body.decode("utf-8"))
-    except json.JSONDecodeError as ex:
-        print(ex)
-        raise AttributeError("invalid json")
-
-    if "question" in payload:
-        payload_type = "question"
-
-        if not QUESTION_ID.fullmatch(payload["question"]):
-            raise AttributeError("invalid question_id")
-        if "name" not in payload:
-            raise AttributeError("invalid question name")
-
-    elif "people" in payload:
-        payload_type = "people"
-
-        if not PEOPLE_HANDLE.fullmatch(payload["people"]):
-            raise AttributeError("invalid people handle")
-        if "name" not in payload:
-            raise AttributeError("invalid people name")
-
-    else:
-        raise AttributeError("unknown payload")
-
-    return payload_type, payload
-
-
-def check_unfollow_request(request):
-    if request.method != 'DELETE':
-        raise AttributeError("invalid HTTP method")
-
-    try:
-        payload = json.loads(request.body.decode("utf-8"))
-    except json.JSONDecodeError as ex:
-        print(ex)
-        raise AttributeError("invalid json")
-
-    if "question" in payload:
-        payload_type = "question"
-        if not QUESTION_ID.fullmatch(payload["question"]):
-            raise AttributeError("invalid question_id")
-
-    elif "people" in payload:
-        payload_type = "people"
-        if not PEOPLE_HANDLE.fullmatch(payload["people"]):
-            raise AttributeError("invalid people handle")
-
-    else:
-        raise AttributeError("unknown payload")
-
-    return payload_type, payload

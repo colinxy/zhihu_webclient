@@ -17,20 +17,14 @@ function getCookie(name) {
 }
 
 function followInfo() {
-    var info_arr = window.location.pathname.split('/').filter(function(x) {
-        return x !== (undefined || '');
-    });
     var info_json = {};
-    for (var i = 0; i < info_arr.length; i+=2) {
-        info_json[info_arr[i]] = info_arr[i+1];
-    }
 
     // title
-    if ("question" in info_json) {
+    if (/^\/question/.test(window.location.pathname)) {
         var title = document.getElementById("zh-question-title").
                 childNodes[1].textContent;
         info_json["name"] = title.trim();
-    } else if ("people" in info_json) {
+    } else if (/^\/people/.test(window.location.pathname)) {
         var name = document.getElementsByClassName("name")[0].textContent;
         info_json["name"] = name.trim();
     }
@@ -38,10 +32,19 @@ function followInfo() {
     return JSON.stringify(info_json);
 }
 
-function follow(){
+function follow(follow_type) {
+    var follow, match;
+    if (follow_type === "question") {
+        match = window.location.pathname.match(/^(\/question\/\d+)/);
+        follow = match[1];
+    } else if (follow_type === "people") {
+        match = window.location.pathname.match(/^(\/people\/[a-zA-Z0-9_-]+)/);
+        follow = match[1];
+    }
+    // console.log(follow);
     // to pass django csrf check, both credentials(cookie)
     // and X-CSRFToken are needed
-    fetch('/follow', {
+    window.fetch(follow, {
         method:'POST',
         credentials:'same-origin',
         body:followInfo(),
@@ -52,27 +55,14 @@ function follow(){
     });
 }
 
-function unfollowInfo(elemId) {
-    var pathname = document.getElementById(elemId).
-            getElementsByTagName('a')[0].pathname;
-    var info_arr = pathname.split('/').filter(function(x) {
-        return x !== (undefined || '');
-    });
-
-    var info_json = {};
-    for (var i = 0; i < info_arr.length; i+=2) {
-        info_json[info_arr[i]] = info_arr[i+1];
-    }
-
-    return JSON.stringify(info_json);
-}
-
 // only available at index page
 function unfollow(elemId) {
-    fetch('/unfollow', {
+    var pathname = document.getElementById(elemId).
+            getElementsByTagName('a')[0].pathname;
+    window.fetch(pathname, {
         method:'DELETE',
         credentials:'same-origin',
-        body:unfollowInfo(elemId),
+        // body:unfollowInfo(elemId),
         headers:{"Content-Type":"application/json",
                  "X-CSRFToken":getCookie("csrftoken")}
     }).then(function(resp) {

@@ -10,8 +10,7 @@ import requests
 import json
 
 from .models import Question, People
-from .zhihu_util import (grab_page, check_follow_request,
-                         check_unfollow_request)
+from .zhihu_util import grab_page
 
 
 @require_safe
@@ -84,17 +83,6 @@ class QuestionView(View):
 
 
 @ensure_csrf_cookie
-def question(request, question_id):
-    status_code, html_str = grab_page("/question/" + question_id)
-
-    if status_code != requests.codes.ok:
-        return HttpResponse(html_str, status=404)
-
-    resp = HttpResponse(html_str)
-    return resp
-
-
-@ensure_csrf_cookie
 def answer(request, question_id, answer_id):
     status_code, html_str = grab_page("/question/" + question_id +
                                       "/answer/" + answer_id)
@@ -137,66 +125,8 @@ class PeopleView(View):
         except ObjectDoesNotExist:
             return HttpResponseBadRequest(content_type="application/json")
 
+        return HttpResponse(content_type="application/json")
+
     @method_decorator(ensure_csrf_cookie)
     def dispatch(self, *args, **kwargs):
-        return super(QuestionView, self).dispatch(*args, **kwargs)
-
-
-@ensure_csrf_cookie
-def people(request, handle):
-    status_code, html_str = grab_page("/people/" + handle)
-
-    if status_code != requests.codes.ok:
-        return HttpResponse(html_str, status=404)
-
-    resp = HttpResponse(html_str)
-    return resp
-
-
-def follow_confirm(request):
-    try:
-        payload_type, payload = check_follow_request(request)
-    except AttributeError as ex:
-        print(ex)
-        return HttpResponse(content_type="application/json", status=400)
-
-    print(payload)
-    # follow question
-    if "question" == payload_type:
-        try:
-            Question.objects.get(question_id=payload["question"])
-        except ObjectDoesNotExist:
-            Question.objects.create(question_id=payload["question"],
-                                    name=payload["name"])
-    # follow person
-    elif "people" == payload_type:
-        try:
-            People.objects.get(handle=payload["people"])
-        except ObjectDoesNotExist:
-            People.objects.create(handle=payload["people"],
-                                  name=payload["name"])
-
-    return HttpResponse(content_type="application/json")
-
-
-def unfollow_confirm(request):
-    try:
-        payload_type, payload = check_unfollow_request(request)
-    except AttributeError as ex:
-        print(ex)
-        return HttpResponse(content_type="application/json", status=400)
-
-    print(payload)
-    try:
-        # delete question
-        if "question" == payload_type:
-            q = Question.objects.get(question_id=payload["question"])
-            q.delete()
-        # delete people
-        elif "people" == payload_type:
-            p = People.objects.get(handle=payload["people"])
-            p.delete()
-    except ObjectDoesNotExist as ex:
-        return HttpResponse(content_type="application/json", status=400)
-
-    return HttpResponse(content_type="application/json")
+        return super(PeopleView, self).dispatch(*args, **kwargs)
