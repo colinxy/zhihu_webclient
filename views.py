@@ -1,17 +1,20 @@
 
 from django.core.exceptions import ObjectDoesNotExist
-from django.http import HttpResponse
+from django.http import HttpResponse, HttpResponseBadRequest
+from django.views import View
+from django.views.decorators.http import require_safe
 from django.views.decorators.csrf import ensure_csrf_cookie
 from django.shortcuts import render
+from django.utils.decorators import method_decorator
 import requests
 import json
 
 from .models import Question, People
-
 from .zhihu_util import (grab_page, check_follow_request,
                          check_unfollow_request)
 
 
+@require_safe
 def index(request):
     return render(request, "client/index.djhtml", {
         "question_following": Question.objects.order_by("name"),
@@ -19,6 +22,7 @@ def index(request):
     })
 
 
+@require_safe
 def search(request):
     status_code, html_str = grab_page("/search", request.GET)
 
@@ -29,6 +33,7 @@ def search(request):
     return resp
 
 
+@require_safe
 def topic(request, topic_id):
     status_code, html_str = grab_page("/topic/" + topic_id)
 
@@ -37,6 +42,45 @@ def topic(request, topic_id):
 
     resp = HttpResponse(html_str)
     return resp
+
+
+class QuestionView(View):
+    def get(self, request, question_id):
+        status_code, html_str = grab_page("/question/" + question_id)
+        if status_code != requests.codes.ok:
+            return HttpResponse(html_str, status=404)
+
+        return HttpResponse(html_str)
+
+    def post(self, request, question_id):
+        "follow question"
+        try:
+            payload = json.loads(request.body.decode("utf-8"))
+            question_name = payload["name"]
+        except (json.JSONDecodeError, KeyError):
+            return HttpResponseBadRequest(content_type="application/json")
+
+        try:
+            Question.objects.get(question_id=question_id)
+        except ObjectDoesNotExist:
+            Question.objects.create(question_id=question_id,
+                                    name=question_name)
+
+        return HttpResponse(content_type="application/json")
+
+    def delete(self, request, question_id):
+        "unfollow question"
+        try:
+            q = Question.objects.get(question_id=question_id)
+            q.delete()
+        except ObjectDoesNotExist:
+            return HttpResponseBadRequest(content_type="application/json")
+
+        return HttpResponse(content_type="application/json")
+
+    @method_decorator(ensure_csrf_cookie)
+    def dispatch(self, *args, **kwargs):
+        return super(QuestionView, self).dispatch(*args, **kwargs)
 
 
 @ensure_csrf_cookie
@@ -60,6 +104,42 @@ def answer(request, question_id, answer_id):
 
     resp = HttpResponse(html_str)
     return resp
+
+
+class PeopleView(View):
+    def get(self, request, handle):
+        status_code, html_str = grab_page("/people/" + handle)
+        if status_code != requests.codes.ok:
+            return HttpResponse(html_str, status=404)
+
+        return HttpResponse(html_str)
+
+    def post(self, request, handle):
+        "follow people"
+        try:
+            payload = json.loads(request.body.decode("utf-8"))
+            name = payload["name"]
+        except (json.JSONDecodeError, KeyError):
+            return HttpResponseBadRequest(content_type="application/json")
+
+        try:
+            People.objects.get(handle=handle)
+        except ObjectDoesNotExist:
+            People.objects.create(handle=handle, name=name)
+
+        return HttpResponse(content_type="application/json")
+
+    def delete(self, request, handle):
+        "unfollow people"
+        try:
+            p = People.objects.get(handle=handle)
+            p.delete()
+        except ObjectDoesNotExist:
+            return HttpResponseBadRequest(content_type="application/json")
+
+    @method_decorator(ensure_csrf_cookie)
+    def dispatch(self, *args, **kwargs):
+        return super(QuestionView, self).dispatch(*args, **kwargs)
 
 
 @ensure_csrf_cookie
