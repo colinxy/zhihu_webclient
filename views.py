@@ -6,24 +6,26 @@ from django.views.decorators.http import require_safe
 from django.views.decorators.csrf import ensure_csrf_cookie
 from django.shortcuts import render
 from django.utils.decorators import method_decorator
+from django.utils import timezone
 import requests
 import json
 
-from .models import Question, People
+from .models import Question, People, Answer
 from .zhihu_util import grab_page
 
 
 @require_safe
 def index(request):
     return render(request, "client/index.djhtml", {
-        "question_following": Question.objects.order_by("name"),
-        "people_following": People.objects.order_by("name"),
+        "question_following": Question.objects.order_by("-date_added"),
+        "people_following": People.objects.order_by("-date_added"),
+        "answer_following": Answer.objects.order_by("-date_added"),
     })
 
 
 @require_safe
 def search(request):
-    status_code, html_str = grab_page("/search", request.GET)
+    status_code, html_str = grab_page("/search", "search", request.GET)
 
     if status_code != requests.codes.ok:
         return HttpResponse(html_str, status=404)
@@ -34,7 +36,8 @@ def search(request):
 
 @require_safe
 def topic(request, topic_id):
-    status_code, html_str = grab_page("/topic/" + topic_id)
+    # additional features of topic not implemented
+    status_code, html_str = grab_page(request.path, "topic")
 
     if status_code != requests.codes.ok:
         return HttpResponse(html_str, status=404)
@@ -45,7 +48,8 @@ def topic(request, topic_id):
 
 class QuestionView(View):
     def get(self, request, question_id):
-        status_code, html_str = grab_page("/question/" + question_id)
+        status_code, html_str = grab_page("/question/" + question_id,
+                                          "question")
         if status_code != requests.codes.ok:
             return HttpResponse(html_str, status=404)
 
@@ -63,7 +67,8 @@ class QuestionView(View):
             Question.objects.get(question_id=question_id)
         except ObjectDoesNotExist:
             Question.objects.create(question_id=question_id,
-                                    name=question_name)
+                                    name=question_name,
+                                    date_added=timezone.now())
 
         return HttpResponse(content_type="application/json")
 
@@ -82,21 +87,56 @@ class QuestionView(View):
         return super(QuestionView, self).dispatch(*args, **kwargs)
 
 
-@ensure_csrf_cookie
-def answer(request, question_id, answer_id):
-    status_code, html_str = grab_page("/question/" + question_id +
-                                      "/answer/" + answer_id)
+class AnswerView(View):
+    def get(self, request, question_id, answer_id):
+        status_code, html_str = grab_page("/question/" + question_id +
+                                          "/answer/" + answer_id,
+                                          "answer")
 
-    if status_code != requests.codes.ok:
-        return HttpResponse(html_str, status=404)
+        if status_code != requests.codes.ok:
+            return HttpResponse(html_str, status=404)
 
-    resp = HttpResponse(html_str)
-    return resp
+        return HttpResponse(html_str)
+
+    def post(self, request, question_id, answer_id):
+        "follow question"
+        try:
+            payload = json.loads(request.body.decode("utf-8"))
+            question_name = payload["name"]
+            author_name = payload["author_name"]
+            answer_name = "{}'s answer to {}".format(author_name,
+                                                     question_name)
+        except (json.JSONDecodeError, KeyError):
+            return HttpResponseBadRequest(content_type="application/json")
+
+        # first create question if it does not exist
+        try:
+            q = Question.objects.get(question_id=question_id)
+        except ObjectDoesNotExist:
+            Question.objects.create(question_id=question_id,
+                                    name=question_name,
+                                    date_added=timezone.now())
+        # then create corresponding answer
+        try:
+            Answer.objects.get(answer_id=answer_id, question=q)
+        except ObjectDoesNotExist:
+            Answer.objects.create(answer_id=answer_id, question=q,
+                                  name=answer_name, date_added=timezone.now())
+
+        return HttpResponse(content_type="application/json")
+
+    def delete(self, request, question_id, answer_id):
+        pass
+
+    @method_decorator(ensure_csrf_cookie)
+    def dispatch(self, *args, **kwargs):
+        return super(AnswerView, self).dispatch(*args, **kwargs)
 
 
 class PeopleView(View):
     def get(self, request, handle):
-        status_code, html_str = grab_page("/people/" + handle)
+        # additional features of topic not implemented
+        status_code, html_str = grab_page(request.path, "people", request.GET)
         if status_code != requests.codes.ok:
             return HttpResponse(html_str, status=404)
 
@@ -113,7 +153,8 @@ class PeopleView(View):
         try:
             People.objects.get(handle=handle)
         except ObjectDoesNotExist:
-            People.objects.create(handle=handle, name=name)
+            People.objects.create(handle=handle, name=name,
+                                  date_added=timezone.now())
 
         return HttpResponse(content_type="application/json")
 

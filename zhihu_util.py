@@ -21,7 +21,7 @@ QUESTION_ID = re.compile(r"\d{6,10}")
 PEOPLE_HANDLE = re.compile(r"[a-zA-Z0-9_-]{3,30}")
 
 
-def grab_page(relative_url, get_params=None):
+def grab_page(relative_url, follow_type, get_params=None):
     resp = requests.get(BASE_URL + relative_url, params=get_params,
                         headers=request_headers)
     resp.encoding = "utf-8"
@@ -31,10 +31,16 @@ def grab_page(relative_url, get_params=None):
     if resp.status_code != requests.codes.ok:
         return resp.status_code, resp.text
 
-    return resp.status_code, process_page(resp.text, relative_url)
+    return resp.status_code, \
+        process_page(resp.text, relative_url, follow_type)
 
 
 def insert_js(soup, elem, follow_type):
+    print(elem.string)
+
+    if follow_type == "answer":
+        elem.string = "关注回答"
+
     script = soup.new_tag("script")
     script["type"] = "text/javascript"
     script["src"] = "/static/client/follow.js"
@@ -44,7 +50,7 @@ def insert_js(soup, elem, follow_type):
     elem["onclick"] = "follow({})".format(repr(follow_type))
 
 
-def process_page(html, relative_url):
+def process_page(html, relative_url, follow_type):
     soup = BeautifulSoup(html, PARSER)
     # remove script
     for s in soup("script"):
@@ -83,11 +89,16 @@ def process_page(html, relative_url):
     soup.head.append(css_main)
 
     # calculate payload inside js
-    # follow question
-    q_div = soup.find("div", id="zh-question-side-header-wrap")
-    if q_div is not None:
-        insert_js(soup, q_div, "question")
-    else:
+    if follow_type == "question":
+        # follow question
+        q_div = soup.select("#zh-question-side-header-wrap .follow-button")
+        if q_div:
+            insert_js(soup, q_div[0], "question")
+    elif follow_type == "answer":
+        a_div = soup.select("#zh-question-side-header-wrap .follow-button")
+        if a_div:
+            insert_js(soup, a_div[0], "answer")
+    elif follow_type == "people":
         # follow people
         p_div = soup.select(".zm-profile-header-op-btns .zg-btn-follow")
         if p_div:

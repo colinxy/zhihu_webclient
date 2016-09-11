@@ -19,12 +19,18 @@ function getCookie(name) {
 function followInfo() {
     var info_json = {};
 
-    // title
     if (/^\/question/.test(window.location.pathname)) {
-        var title = document.getElementById("zh-question-title").
-                childNodes[1].textContent;
+        // title, question
+        var title = document.getElementById("zh-question-title").textContent;
         info_json["name"] = title.trim();
+        if (/^\/question\/\d+\/answer/.test(window.location.pathname)) {
+            // answer
+            var author = document.getElementsByClassName("author-link-line")[0]
+                    .textContent;
+            info_json["author_name"] = author.trim();
+        }
     } else if (/^\/people/.test(window.location.pathname)) {
+        // people
         var name = document.getElementsByClassName("name")[0].textContent;
         info_json["name"] = name.trim();
     }
@@ -39,6 +45,9 @@ function follow(follow_type) {
         follow = match[1];
     } else if (follow_type === "people") {
         match = window.location.pathname.match(/^(\/people\/[a-zA-Z0-9_-]+)/);
+        follow = match[1];
+    } else if (follow_type === "answer") {
+        match = window.location.pathname.match(/^(\/question\/\d+\/answer\/\d+)/);
         follow = match[1];
     }
     // console.log(follow);
@@ -57,8 +66,8 @@ function follow(follow_type) {
 
 // only available at index page
 function unfollow(elemId) {
-    var pathname = document.getElementById(elemId).
-            getElementsByTagName('a')[0].pathname;
+    var pathname = document.getElementById(elemId)
+            .getElementsByTagName('a')[0].pathname;
     window.fetch(pathname, {
         method:'DELETE',
         credentials:'same-origin',

@@ -44,6 +44,7 @@
 <h1>Zhihu Client Built for Anonymity</h1>
 
 {% block content %}
+
   <!-- questions -->
   <h2>Questions I have followed</h2>
   {% if question_following %}
@@ -73,6 +74,22 @@
   {% else %}
     <p>Haven't followed anybody yet? Try the green follow button</p>
   {% endif %}
+
+  <!-- answer -->
+  <h2>Answers I have followed</h2>
+  {% if answer_following %}
+    <ul>
+      {% for follow in answer_following %}
+        <li id="answer{{ forloop.counter }}">
+          <span><button class="follow" onclick="unfollow('people{{ forloop.counter }}')">X</button></span>
+          <a href="{% url 'client:answer' follow.question.question_id follow.answer_id %}">{{ follow.name }}</a>
+        </li>
+      {% endfor %}
+    </ul>
+  {% else %}
+    <p>Haven't followed answer yet? Try the green follow button</p>
+  {% endif %}
+
 {% endblock %}
 
 </body>
