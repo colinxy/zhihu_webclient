@@ -74,8 +74,13 @@ class QuestionView(View):
 
     def delete(self, request, question_id):
         "unfollow question"
+        # CAVEAT : get rid of a question would
+        # get rid of all its corresponding answers
         try:
             q = Question.objects.get(question_id=question_id)
+            # delete all corresponding answers
+            Answer.objects.filter(question=q).delete()
+            # delete question
             q.delete()
         except ObjectDoesNotExist:
             return HttpResponseBadRequest(content_type="application/json")
@@ -104,8 +109,6 @@ class AnswerView(View):
             payload = json.loads(request.body.decode("utf-8"))
             question_name = payload["name"]
             author_name = payload["author_name"]
-            answer_name = "{}'s answer to {}".format(author_name,
-                                                     question_name)
         except (json.JSONDecodeError, KeyError):
             return HttpResponseBadRequest(content_type="application/json")
 
@@ -113,20 +116,28 @@ class AnswerView(View):
         try:
             q = Question.objects.get(question_id=question_id)
         except ObjectDoesNotExist:
-            Question.objects.create(question_id=question_id,
-                                    name=question_name,
-                                    date_added=timezone.now())
+            q = Question.objects.create(question_id=question_id,
+                                        name=question_name,
+                                        date_added=timezone.now())
         # then create corresponding answer
         try:
             Answer.objects.get(answer_id=answer_id, question=q)
         except ObjectDoesNotExist:
             Answer.objects.create(answer_id=answer_id, question=q,
-                                  name=answer_name, date_added=timezone.now())
+                                  author_name=author_name,
+                                  date_added=timezone.now())
 
         return HttpResponse(content_type="application/json")
 
     def delete(self, request, question_id, answer_id):
-        pass
+        "unfollow answer"
+        try:
+            ans = Answer.objects.get(answer_id=answer_id)
+            ans.delete()
+        except ObjectDoesNotExist:
+            return HttpResponseBadRequest(content_type="application/json")
+
+        return HttpResponse(content_type="application/json")
 
     @method_decorator(ensure_csrf_cookie)
     def dispatch(self, *args, **kwargs):

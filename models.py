@@ -32,9 +32,9 @@ class Question(models.Model):
 class Answer(models.Model):
     answer_id = models.CharField(max_length=20, primary_key=True)
     question = models.ForeignKey(Question, on_delete=models.CASCADE)
-    name = models.CharField(max_length=200)
+    author_name = models.CharField(max_length=200)
     date_added = models.DateTimeField()
 
     def __str__(self):
         return "<Answer: {}, Question: {}>".\
-            format(self.name, self.question.question_id)
+            format(self.author_name, self.question.question_id)

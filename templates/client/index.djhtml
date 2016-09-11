@@ -81,13 +81,15 @@
     <ul>
       {% for follow in answer_following %}
         <li id="answer{{ forloop.counter }}">
-          <span><button class="follow" onclick="unfollow('people{{ forloop.counter }}')">X</button></span>
-          <a href="{% url 'client:answer' follow.question.question_id follow.answer_id %}">{{ follow.name }}</a>
+          <span><button class="follow" onclick="unfollow('answer{{ forloop.counter }}')">X</button></span>
+          <a href="{% url 'client:answer' follow.question.question_id follow.answer_id %}">{{ follow.author_name }}</a>
+          <span>'s answer to </span>
+          <a href="{% url 'client:question' follow.question.question_id %}">{{ follow.question.name }}</a>
         </li>
       {% endfor %}
     </ul>
   {% else %}
-    <p>Haven't followed answer yet? Try the green follow button</p>
+    <p>Haven't followed any answers yet? Try the green follow button</p>
   {% endif %}
 
 {% endblock %}
