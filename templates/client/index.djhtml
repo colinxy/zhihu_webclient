@@ -30,8 +30,14 @@
 
     <div class="zu-top-nav">
       <ul class="zu-top-nav-ul">
-        <li class="zu-top-nav-li ">
-          <a class="zu-top-nav-link" href="/explore">发现</a>
+        <!-- <li class="zu-top-nav-li">
+             <a class="zu-top-nav-link" href="/explore">发现</a>
+             </li> -->
+        <li class="zu-top-nav-li">
+          <a class="zu-top-nav-link" href="/signup">注册</a>
+        </li>
+        <li class="zu-top-nav-li">
+          <a class="zu-top-nav-link" href="/login">登录</a>
         </li>
       </ul>
     </div>

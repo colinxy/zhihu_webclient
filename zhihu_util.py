@@ -104,4 +104,4 @@ def process_page(html, relative_url, follow_type):
         if p_div:
             insert_js(soup, p_div[0], "people")
 
-    return str(soup)
+    return str(soup).replace(BASE_URL, '')
