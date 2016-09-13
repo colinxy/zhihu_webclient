@@ -29,17 +29,28 @@
     </div>
 
     <div class="zu-top-nav">
-      <ul class="zu-top-nav-ul">
-        <!-- <li class="zu-top-nav-li">
-             <a class="zu-top-nav-link" href="/explore">发现</a>
-             </li> -->
-        <li class="zu-top-nav-li">
-          <a class="zu-top-nav-link" href="/signup">注册</a>
-        </li>
-        <li class="zu-top-nav-li">
-          <a class="zu-top-nav-link" href="/login">登录</a>
-        </li>
-      </ul>
+      <div>
+        {% if user.is_authenticated %}
+          <span class="zu-top-nav-user">Welcome, {{ user.username }}</span>
+        {% endif %}
+      </div>
+
+      <div>
+        <ul class="zu-top-nav-ul">
+          {% if not user.is_authenticated %}
+            <li class="zu-top-nav-li">
+              <a class="zu-top-nav-link" href="{% url 'client:register' %}?next={{ request.path | urlencode }}">register</a>
+            </li>
+            <li class="zu-top-nav-li">
+              <a class="zu-top-nav-link" href="{% url 'client:login' %}?next={{ request.path | urlencode }}">login</a>
+            </li>
+          {% else %}
+            <li class="zu-top-nav-li">
+              <a class="zu-top-nav-link" href="{% url 'client:logout' %}?next={{ request.path | urlencode }}">logout</a>
+            </li>
+          {% endif %}
+        </ul>
+      </div>
     </div>
 
   </div>

@@ -1,0 +1,24 @@
+
+{% load staticfiles %}
+<link rel="stylesheet" type="text/css" href="{% static 'client/login_style.css' %}" />
+<title>Zhihu Client Login</title>
+
+<div class="main">
+  <h2>Zhihu Client Login</h2>
+
+  <h3>This is <em>NOT</em> zhihu.com</h3>
+  <p>For your own safety, pick a different password</p>
+
+  <form method="POST" >
+    {{ form }}
+    {% csrf_token %}
+    <div>
+      <button type="submit">submit</button>
+    </div>
+  </form>
+
+  <div>
+    <p>Don't have an account? Register one <a href="{% url 'client:register' %}">here</a></p>
+  </div>
+
+</div>

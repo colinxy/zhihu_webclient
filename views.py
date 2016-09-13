@@ -1,4 +1,5 @@
 
+from django.contrib.auth.decorators import login_required
 from django.core.exceptions import ObjectDoesNotExist
 from django.http import HttpResponse, HttpResponseBadRequest
 from django.views import View
@@ -17,6 +18,7 @@ from .zhihu_util import grab_page
 @require_safe
 def index(request):
     return render(request, "client/index.djhtml", {
+        "user": request.user,
         "question_following": Question.objects.order_by("-date_added"),
         "people_following": People.objects.order_by("-date_added"),
         "answer_following": Answer.objects.order_by("-date_added"),
