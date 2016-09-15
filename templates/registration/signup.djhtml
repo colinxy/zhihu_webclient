@@ -8,9 +8,10 @@
 
   <h3>This is <em>NOT</em> zhihu.com</h3>
   <p>For your own safety, pick a different password</p>
+  <br>
 
   <form method="POST" >
-    {{ form }}
+    {{ form.as_p }}
     {% csrf_token %}
 
     <div>

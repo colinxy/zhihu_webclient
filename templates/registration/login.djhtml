@@ -10,7 +10,7 @@
   <p>For your own safety, pick a different password</p>
 
   <form method="POST" >
-    {{ form }}
+    {{ form.as_p }}
     {% csrf_token %}
     <div>
       <button type="submit">submit</button>

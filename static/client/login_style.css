@@ -1,14 +1,24 @@
 
-.helptext {
-    display: none;
-}
-
 body {
     background: #f7fafc;
 }
 
 div.main {
     text-align: center;
-    width: 250px;
+    width: 300px;
     margin: 0 auto;
+}
+
+ul {
+    list-style-type: none;
+    padding: 0;
+    margin: 0;
+}
+
+.helptext {
+    display: none;
+}
+
+.errorlist {
+    color: red;
 }

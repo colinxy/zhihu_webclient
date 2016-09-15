@@ -1,13 +1,17 @@
 
-from django.contrib.auth.decorators import login_required
+from django.contrib.auth import authenticate, login
+from django.contrib.auth.forms import UserCreationForm
 from django.core.exceptions import ObjectDoesNotExist
 from django.http import HttpResponse, HttpResponseBadRequest
-from django.views import View
+from django.shortcuts import render
+from django.urls import reverse
+from django.utils.decorators import method_decorator
+from django.utils.http import urlencode
+from django.utils import timezone
 from django.views.decorators.http import require_safe
 from django.views.decorators.csrf import ensure_csrf_cookie
-from django.shortcuts import render
-from django.utils.decorators import method_decorator
-from django.utils import timezone
+from django.views.generic.base import View
+from django.views.generic.edit import FormView
 import requests
 import json
 
@@ -17,12 +21,35 @@ from .zhihu_util import grab_page
 
 @require_safe
 def index(request):
+    if not request.user.is_authenticated():
+        return render(request, "client/index.djhtml", {
+            "question_following": [],
+            "people_following": [],
+            "answer_following": []
+        })
+
     return render(request, "client/index.djhtml", {
-        "user": request.user,
-        "question_following": Question.objects.order_by("-date_added"),
-        "people_following": People.objects.order_by("-date_added"),
-        "answer_following": Answer.objects.order_by("-date_added"),
+        "question_following": Question.objects.
+        filter(user=request.user).order_by("-date_added"),
+        "people_following": People.objects.
+        filter(user=request.user).order_by("-date_added"),
+        "answer_following": Answer.objects.
+        filter(user=request.user).order_by("-date_added"),
     })
+
+
+class RegisterView(FormView):
+    template_name = "registration/signup.djhtml"
+    form_class = UserCreationForm
+    success_url = "/"
+
+    def form_valid(self, form):
+        form.save()             # save to db
+
+        new_user = authenticate(username=form.cleaned_data["username"],
+                                password=form.cleaned_data["password1"])
+        login(self.request, new_user)
+        return super(RegisterView, self).form_valid(form)
 
 
 @require_safe
@@ -59,6 +86,9 @@ class QuestionView(View):
 
     def post(self, request, question_id):
         "follow question"
+        if not request.user.is_authenticated():
+            return self.redirect_login()
+
         try:
             payload = json.loads(request.body.decode("utf-8"))
             question_name = payload["name"]
@@ -66,28 +96,36 @@ class QuestionView(View):
             return HttpResponseBadRequest(content_type="application/json")
 
         try:
-            Question.objects.get(question_id=question_id)
+            Question.objects.get(question_id=question_id, user=request.user)
         except ObjectDoesNotExist:
             Question.objects.create(question_id=question_id,
                                     name=question_name,
-                                    date_added=timezone.now())
+                                    date_added=timezone.now(),
+                                    user=request.user)
 
         return HttpResponse(content_type="application/json")
 
     def delete(self, request, question_id):
         "unfollow question"
-        # CAVEAT : get rid of a question would
-        # get rid of all its corresponding answers
+        if not request.user.is_authenticated():
+            return self.redirect_login()
+
         try:
-            q = Question.objects.get(question_id=question_id)
-            # delete all corresponding answers
-            Answer.objects.filter(question=q).delete()
+            q = Question.objects.get(question_id=question_id,
+                                     user=request.user)
             # delete question
+            # delete all corresponding answers, on_delete=CASCADE
             q.delete()
         except ObjectDoesNotExist:
             return HttpResponseBadRequest(content_type="application/json")
 
         return HttpResponse(content_type="application/json")
+
+    def redirect_login(self):
+        resp = {"url": "{}?next={}".format(reverse('client:question'),
+                                           urlencode(self.request.path))}
+        return HttpResponse(json.dumps(resp),
+                            content_type="application/json")
 
     @method_decorator(ensure_csrf_cookie)
     def dispatch(self, *args, **kwargs):
@@ -107,6 +145,9 @@ class AnswerView(View):
 
     def post(self, request, question_id, answer_id):
         "follow question"
+        if not request.user.is_authenticated():
+            return self.redirect_login()
+
         try:
             payload = json.loads(request.body.decode("utf-8"))
             question_name = payload["name"]
@@ -116,30 +157,44 @@ class AnswerView(View):
 
         # first create question if it does not exist
         try:
-            q = Question.objects.get(question_id=question_id)
+            q = Question.objects.get(question_id=question_id,
+                                     user=request.user)
         except ObjectDoesNotExist:
             q = Question.objects.create(question_id=question_id,
                                         name=question_name,
-                                        date_added=timezone.now())
+                                        date_added=timezone.now(),
+                                        user=request.user)
         # then create corresponding answer
         try:
             Answer.objects.get(answer_id=answer_id, question=q)
         except ObjectDoesNotExist:
             Answer.objects.create(answer_id=answer_id, question=q,
                                   author_name=author_name,
-                                  date_added=timezone.now())
+                                  date_added=timezone.now(),
+                                  user=request.user)
 
         return HttpResponse(content_type="application/json")
 
     def delete(self, request, question_id, answer_id):
         "unfollow answer"
+        if not request.user.is_authenticated():
+            return self.redirect_login()
+
         try:
-            ans = Answer.objects.get(answer_id=answer_id)
+            q = Question.objects.get(question_id=question_id,
+                                     username=request.user)
+            ans = Answer.objects.get(question=q, answer_id=answer_id)
             ans.delete()
         except ObjectDoesNotExist:
             return HttpResponseBadRequest(content_type="application/json")
 
         return HttpResponse(content_type="application/json")
+
+    def redirect_login(self):
+        resp = {"url": "{}?next={}".format(reverse('client:answer'),
+                                           urlencode(self.request.path))}
+        return HttpResponse(json.dumps(resp),
+                            content_type="application/json")
 
     @method_decorator(ensure_csrf_cookie)
     def dispatch(self, *args, **kwargs):
@@ -157,6 +212,9 @@ class PeopleView(View):
 
     def post(self, request, handle):
         "follow people"
+        if not request.user.is_authenticated():
+            return self.redirect_login()
+
         try:
             payload = json.loads(request.body.decode("utf-8"))
             name = payload["name"]
@@ -164,22 +222,32 @@ class PeopleView(View):
             return HttpResponseBadRequest(content_type="application/json")
 
         try:
-            People.objects.get(handle=handle)
+            People.objects.get(handle=handle, user=request.user)
         except ObjectDoesNotExist:
             People.objects.create(handle=handle, name=name,
-                                  date_added=timezone.now())
+                                  date_added=timezone.now(),
+                                  user=request.user)
 
         return HttpResponse(content_type="application/json")
 
     def delete(self, request, handle):
         "unfollow people"
+        if not request.user.is_authenticated():
+            return self.redirect_login()
+
         try:
-            p = People.objects.get(handle=handle)
+            p = People.objects.get(handle=handle, user=request.user)
             p.delete()
         except ObjectDoesNotExist:
             return HttpResponseBadRequest(content_type="application/json")
 
         return HttpResponse(content_type="application/json")
+
+    def redirect_login(self):
+        resp = {"url": "{}?next={}".format(reverse('client:people'),
+                                           urlencode(self.request.path))}
+        return HttpResponse(json.dumps(resp),
+                            content_type="application/json")
 
     @method_decorator(ensure_csrf_cookie)
     def dispatch(self, *args, **kwargs):
